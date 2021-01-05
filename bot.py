@@ -1,12 +1,13 @@
 from discord.ext import commands
-import discord, subprocess, os, json
-import chat_exporter
+import discord, json, chat_exporter, requests
+from github import Github
 
-from dotenv import load_dotenv
 
-load_dotenv()
-TOKEN = os.getenv('TOKEN')
+g = Github(open('GitHub_token.txt','r').read())
 
+TOKEN = open('Discord_token.txt', 'r').read()
+key = open('Hypixel_key.txt','r').read()
+repo = g.get_user('SheepCommander').get_repo( "KnowledgeBase" )
 
 def get_prefix(client, message):
     with open('prefixes.json', 'r') as f:
@@ -56,9 +57,7 @@ class Misc(commands.Cog):
     async def foo(self, ctx, arg):
         await ctx.send(arg)
 
-    @commands.command()
-    async def invite(self, ctx):
-        await ctx.send(embed=discord.Embed(title="Invite me to your server!", url="https://discord.com/api/oauth2/authorize?client_id=782818919336902676&permissions=8&scope=bot",color=ctx.author.color))
+
 
     @commands.command()
     @commands.has_permissions(administrator = True)
@@ -76,7 +75,7 @@ class Misc(commands.Cog):
             await ctx.send('Pong! \nBot Latency is ' + str(bot.latency))
     @commands.command()
     async def source(self, ctx):
-        await ctx.send(embed=discord.Embed(title="Knowledge Bot's source code", url="https://github.com/SheepCommander/KnowledgeBase/tree/main/bots/Knowledge-Bot%20Anthony2be",color=ctx.author.color))
+        await ctx.send(embed=discord.Embed(title="Knowledge Bot's source code", url="https://github.com/Anthony2be/Knowledge-Bot",color=ctx.author.color))
 
 
 
@@ -124,38 +123,34 @@ class Knowledge(commands.Cog):
     async def github(self, ctx, folder, * , thing):
         if thing == 'list':
             things = ""
-            for x in os.listdir(f'KnowledgeBase/{folder}'):
-                things += x + "\n"
+            for file in repo.get_contents(f"1.16.4/{folder}/"):
+                things += file.name + "\n"
             embed=discord.Embed(color=ctx.author.color)
             embed.add_field(name=f"{folder}:", value=things, inline=False)
             await ctx.send(embed=embed)
 
         elif thing == 'you':
-            ctx.send('no u')
+            await ctx.send('no u')
 
         else:
-            f = open(f'KnowledgeBase/{folder}/' + thing + '/raw-paste.txt', 'r',encoding = 'utf=8')
-            raw = f.read()
-            f.close()
-            await ctx.send(raw)
+            file_content = repo.get_contents(f'1.16.4/{folder}/' + thing + '/raw-discord-paste.txt')
+            await ctx.send(file_content.decoded_content.decode())
 
-
-    @commands.command(brief='Updates the repo', description = 'Updates the repo that the bot uses')
-    async def update(self, ctx):
-        subprocess.call([r'repo-updater.bat'])
-        await ctx.send('Updated!')
 
     @commands.command()
     async def acronyms(self, ctx):
-        f = open(f'KnowledgeBase/acronyms-list/raw-paste.txt', 'r',encoding = 'utf=8')
-        raw = f.read()
-        f.close()
-        await ctx.send(raw)
+        file_content = repo.get_contents(f'1.16.4/acronyms-list/raw-discord-paste.txt')
+        await ctx.send(file_content.decoded_content.decode())
+
+
+
+
 
 @bot.event
 async def on_command_error(ctx, error):
     await ctx.send(error)
 
+        
     
 
 

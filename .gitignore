@@ -130,3 +130,6 @@ dmypy.json
 
 #Token
 token.txt
+Discord_token.txt
+GitHub_token.txt
+Hypixel_key.txt
